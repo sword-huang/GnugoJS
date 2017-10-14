@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" type="text/css" href="board.css">
+</head>
+  <body>
+  <div id="gnugo">
+    <canvas id="board" width="600" height="600"></canvas>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js">
+
+  </script>
+  <script>
+
+      class Board {
+          constructor(canvas, size) {
+              this.size = size;
+              this.canvas = canvas;
+          }
+
+          computeCanvasSize() {
+              var canvasWidth;
+              var width;
+              if (screen.width > screen.height) {
+                  width = screen.height;
+              } else {
+                  width = screen.width;
+              }
+
+              if (width > 500) {
+                  canvasWidth = 500;
+              } else {
+                  canvasWidth = width;
+              }
+              return canvasWidth;
+          }
+
+          resetCanvasSize() {
+              var canvasSize = this.computeCanvasSize();
+              this.canvas.attr("width", canvasSize);
+              this.canvas.attr("height", canvasSize);
+          }
+
+          genBoardUnitSize(canvasSize, offset) {
+              return parseInt((canvasSize-offset*2) / (this.size-1));
+          }
+
+          genBoardOffsetX(canvasSize) {
+              return parseInt(canvasSize / 20);
+          }
+
+          genBoardOffsetY(canvasSize) {
+              return parseInt(canvasSize / 20);
+          }
+
+          drawBoard() {
+              var domCanvas = this.canvas.get(0);
+              var context = domCanvas.getContext("2d");
+
+              var canvasSize = this.computeCanvasSize();
+              var offset = this.genBoardOffsetX(canvasSize);
+              var boardOffsetX = offset;
+              var boardOffsetY = offset;
+
+              var unitSize = this.genBoardUnitSize(canvasSize, offset);
+              var boardWidth = unitSize * (this.size-1);
+
+              //draw background
+//              context.fillStyle = "#00aa00";
+//              context.fillRect(0, 0, canvasSize, canvasSize);
+
+              //draw coor
+              context.fillStyle = "#000000";
+              for (var i=0; i<this.size; i++) {
+                  context.moveTo(boardOffsetX, boardOffsetY + i*unitSize);
+                  context.lineTo(boardOffsetX + boardWidth, boardOffsetY + i*unitSize);
+              }
+
+              for (var j=0; j<this.size; j++) {
+                  context.moveTo(boardOffsetX + j*unitSize, boardOffsetY);
+                  context.lineTo(boardOffsetX + j*unitSize, boardOffsetY + boardWidth);
+              }
+              context.stroke();
+
+              //draw star
+              if (this.size >= 19) {
+                  var r = parseInt(unitSize/6);
+                  var sAngle = 0 * Math.PI;
+                  var eAngle = 2 * Math.PI;
+
+                  context.beginPath();
+                  context.arc(boardOffsetX+3*unitSize, boardOffsetY+3*unitSize, r, sAngle, eAngle);
+                  context.closePath();
+                  context.fill();
+
+                  context.beginPath();
+                  context.arc(boardOffsetX+3*unitSize, boardOffsetY+parseInt(this.size/2)*unitSize, r, sAngle, eAngle);
+                  context.closePath();
+                  context.fill();
+
+                  context.beginPath();
+                  context.arc(boardOffsetX+3*unitSize, boardOffsetY+(this.size-4)*unitSize, r, sAngle, eAngle);
+                  context.closePath();
+                  context.fill();
+
+                  context.beginPath();
+                  context.arc(boardOffsetX+parseInt(this.size/2)*unitSize, boardOffsetY+3*unitSize, r, sAngle, eAngle);
+                  context.closePath();
+                  context.fill();
+
+                  context.beginPath();
+                  context.arc(boardOffsetX+parseInt(this.size/2)*unitSize, boardOffsetY+parseInt(this.size/2)*unitSize, r, sAngle, eAngle);
+                  context.closePath();
+                  context.fill();
+
+                  context.beginPath();
+                  context.arc(boardOffsetX+parseInt(this.size/2)*unitSize, boardOffsetY+(this.size-4)*unitSize, r, sAngle, eAngle);
+                  context.closePath();
+                  context.fill();
+
+                  context.beginPath();
+                  context.arc(boardOffsetX+(this.size-4)*unitSize, boardOffsetY+3*unitSize, r, sAngle, eAngle);
+                  context.closePath();
+                  context.fill();
+
+                  context.beginPath();
+                  context.arc(boardOffsetX+(this.size-4)*unitSize, boardOffsetY+parseInt(this.size/2)*unitSize, r, sAngle, eAngle);
+                  context.closePath();
+                  context.fill();
+
+                  context.beginPath();
+                  context.arc(boardOffsetX+(this.size-4)*unitSize, boardOffsetY+(this.size-4)*unitSize, r, sAngle, eAngle);
+                  context.closePath();
+                  context.fill();
+
+              }
+
+          }
+      }
+
+      var canvas = $('#board');
+      var board = new Board(canvas, 19);
+      board.resetCanvasSize();
+      board.drawBoard();
+
+//      function showboard() {
+//          console.log("send showboard ...");
+//          ws.send("showboard");
+//      }
+//
+//      var ws = new WebSocket('ws://47.90.122.6:8001/');
+//      ws.onopen = function(evt) {
+//          console.log("Connection open ...");
+//          setTimeout("showboard()", 3000);
+//      };
+//
+//      ws.onmessage = function(evt) {
+//          console.log( "Received Message: " + evt.data);
+//      };
+//
+//      ws.onclose = function(evt) {
+//          console.log("Connection closed.");
+//      };
+
+  </script>
+
+
+  </body>
+
+  </html>
