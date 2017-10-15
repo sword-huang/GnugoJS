@@ -5,13 +5,39 @@
   <link rel="stylesheet" type="text/css" href="board.css">
 </head>
   <body>
-  <div id="gnugo">
+  <div id="working">
     <canvas id="board" width="600" height="600"></canvas>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.2.1.min.js">
+  <div id="preWork">
+    <div>
+      <input type="radio" name="color" value="1" checked="checked">Black
+      <input type="radio" name="color" value="-1">White
+    </div>
 
-  </script>
+    <div>
+      <input type="radio" name="board_size" value="7" checked="checked">7
+      <input type="radio" name="board_size" value="9">9
+      <input type="radio" name="board_size" value="13">13
+      <input type="radio" name="board_size" value="19">19
+    </div>
+
+    <div>
+      <select id="gnugo_level">
+        <option value ="10">10</option>
+        <option value ="9">9</option>
+      </select>
+    </div>
+
+<!--    <div>
+      <input type="text" class="spinner"/>
+    </div>
+-->
+    <button id="start_button" type="button" value="0" onclick="onClickStart()">Start Game</button>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <script src="https://www.helloweba.com/demo/spinner/spinner/jquery.spinner.js"></script>
   <script>
 
       class Board {
@@ -24,6 +50,77 @@
               this.stoneList = stoneList;
           }
 
+          move(color, x, y) {
+              var position = this.computeMovePosition(x, y);
+              console.log(position);
+              if (position < 0 || position > Math.pow(this.size, 2)-1) {
+                  return;
+              }
+              this.stoneList[position] = color;
+          }
+
+          computeMovePosition(x, y) {
+              var canvasSize = this.computeCanvasSize();
+              var offset = this.genBoardOffsetX(canvasSize);
+              var unitSize = this.genBoardUnitSize(canvasSize, offset);
+
+              if (x < parseInt(offset/2) || x > (unitSize*(this.size-1) + parseInt(offset*1.5))) {
+                  console.log("error x=" + x);
+                  return -1;
+              }
+
+              if (y < parseInt(offset/2) || y > (unitSize*(this.size-1) + parseInt(offset*1.5))) {
+                  console.log("error y=" + y);
+                  return -1;
+              }
+
+              var coorX = this.computeCoor(y, offset, unitSize);
+              var coorY = this.computeCoor(x, offset, unitSize);
+
+              if (coorX < 0 || coorY < 0) {
+                  return -1;
+              }
+
+              return coorX * this.size + coorY;
+          }
+
+          computeCoor(x, offset, unitSize) {
+              var coorY = -1;
+              var leftLine = -1;
+              var rightLine = -1;
+              for (var i=0; i<this.size+1; i++) {
+                  if (i === 0) {
+                      leftLine = parseInt(offset / 2);
+                      rightLine = offset;
+                      if (x >= leftLine && x < rightLine) {
+                          coorY = 0;
+                          break;
+                      }
+
+                  } else if (i === this.size) {
+                      leftLine = rightLine;
+                      rightLine = offset * 2 + unitSize * (this.size-1);
+                      if (x >= leftLine && x < rightLine) {
+                          coorY = this.size - 1;
+                          break;
+                      }
+
+                  } else {
+                      leftLine = rightLine;
+                      rightLine = offset + unitSize * i;
+                      if (x >= leftLine && x < rightLine) {
+                          if (Math.abs(x-leftLine) - Math.abs(rightLine-x) <= 0) {
+                              coorY = i - 1;
+                          } else {
+                              coorY = i;
+                          }
+                          break;
+                      }
+                  }
+              }
+              return coorY;
+          }
+
           computeCanvasSize() {
               var canvasWidth;
               var width;
@@ -34,7 +131,7 @@
               }
 
               if (width > 500) {
-                  canvasWidth = 500;
+                  canvasWidth = 600;
               } else {
                   canvasWidth = width;
               }
@@ -145,15 +242,24 @@
                   context.fill();
 
               }
+
+              //draw X,Y
+              context.fillStyle = "#000000";
+              for (var i=0; i<this.size; i++) {
+                  context.fillText(""+(this.size-i), boardOffsetX-15, boardOffsetY + i*unitSize);
+                  context.fillText(String.fromCharCode(65+(i<9?i:(i+1))), boardOffsetX + i*unitSize, boardOffsetY-10);
+              }
+              context.stroke();
+
           }
 
           drawStone(context, boardOffsetX, boardOffsetY, boardWidth, unitSize) {
+              console.log("stonelist=" + this.stoneList.length);
               var r = parseInt(unitSize/2.1);
               var sAngle = 0 * Math.PI;
               var eAngle = 2 * Math.PI;
               for (var i=0; i<this.stoneList.length; i++) {
                   var stone = this.stoneList[i];
-                  console.log("stone.color=" + stone);
                   if (stone == 1) {
                       context.fillStyle = "#000000";
                   } else if (stone == -1) {
@@ -172,31 +278,73 @@
           }
       }
 
-      var canvas = $('#board');
-      var board = new Board(canvas, 19);
-      board.resetCanvasSize();
-      var stoneList = [0, 0, 1, -1];
-      board.updateStoneList(stoneList);
-      board.draw();
+      function init() {
+          var canvas = $('#board');
+          var board = new Board(canvas, 19);
+          board.resetCanvasSize();
+          board.updateStoneList([]);
+          board.draw();
 
-//      function showboard() {
-//          console.log("send showboard ...");
-//          ws.send("showboard");
-//      }
-//
+          canvas.click(function (e) {
+              var style = window.getComputedStyle($('#board').get(0), null);
+              var borderLeft = parseFloat(style["border-left-width"]);
+              var borderTop = parseFloat(style["border-top-width"]);
+              var paddingLeft = parseFloat(style["padding-left"]);
+              var paddingTop = parseFloat(style["padding-top"]);
+              var rect = $('#board').get(0).getBoundingClientRect();
+              var x = e.clientX;
+              var y = e.clientY;
+              x -= rect.left - borderLeft - paddingLeft;
+              y -= rect.top - borderTop - paddingTop;
+              console.log('x = ' + x + ', y = ' + y);
+              board.move(1, x, y);
+              board.draw();
+          });
+      }
+
+      function onClickStart() {
+          //get color
+          var colorRadio = $('input[name=color]:checked');
+          if(colorRadio.length > 0) {
+              console.log(colorRadio.attr("value"));
+          }
+
+          //get board size
+          var boardSizeRadio = $('input[name=board_size]:checked');
+          if(boardSizeRadio.length > 0) {
+              console.log(boardSizeRadio.attr("value"));
+          }
+
+          //get gnugo level
+          var levelSelect = $("#gnugo_level").val();
+          console.log(levelSelect);
+
+          //get komi
+//          var komi = $(".spinner").spinner();
+//          console.log(komi);
+      }
+
+      init();
+
 //      var ws = new WebSocket('ws://47.90.122.6:8001/');
-//      ws.onopen = function(evt) {
+//      ws.onopen = function(event) {
 //          console.log("Connection open ...");
-//          setTimeout("showboard()", 3000);
+//          init();
 //      };
 //
-//      ws.onmessage = function(evt) {
-//          console.log( "Received Message: " + evt.data);
+//      ws.onmessage = function(event) {
+//          console.log( "Received Message: " + event.data);
 //      };
 //
-//      ws.onclose = function(evt) {
+//      ws.onclose = function(event) {
 //          console.log("Connection closed.");
 //      };
+//
+//      ws.onerror = function (event) {
+//          console.log("Connection error.");
+//      }
+
+
 
   </script>
 
