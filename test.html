@@ -20,6 +20,10 @@
               this.canvas = canvas;
           }
 
+          updateStoneList(stoneList) {
+              this.stoneList = stoneList;
+          }
+
           computeCanvasSize() {
               var canvasWidth;
               var width;
@@ -55,7 +59,7 @@
               return parseInt(canvasSize / 20);
           }
 
-          drawBoard() {
+          draw() {
               var domCanvas = this.canvas.get(0);
               var context = domCanvas.getContext("2d");
 
@@ -67,6 +71,11 @@
               var unitSize = this.genBoardUnitSize(canvasSize, offset);
               var boardWidth = unitSize * (this.size-1);
 
+              this.drawBoard(context, boardOffsetX, boardOffsetY, boardWidth, unitSize);
+              this.drawStone(context, boardOffsetX, boardOffsetY, boardWidth, unitSize);
+          }
+
+          drawBoard(context, boardOffsetX, boardOffsetY, boardWidth, unitSize) {
               //draw background
 //              context.fillStyle = "#00aa00";
 //              context.fillRect(0, 0, canvasSize, canvasSize);
@@ -136,6 +145,29 @@
                   context.fill();
 
               }
+          }
+
+          drawStone(context, boardOffsetX, boardOffsetY, boardWidth, unitSize) {
+              var r = parseInt(unitSize/2.1);
+              var sAngle = 0 * Math.PI;
+              var eAngle = 2 * Math.PI;
+              for (var i=0; i<this.stoneList.length; i++) {
+                  var stone = this.stoneList[i];
+                  console.log("stone.color=" + stone);
+                  if (stone == 1) {
+                      context.fillStyle = "#000000";
+                  } else if (stone == -1) {
+                      context.fillStyle = "#ffffff";
+                  } else {
+                      continue;
+                  }
+                  var x = boardOffsetX + (i % this.size) * unitSize;
+                  var y = boardOffsetY + parseInt(i/this.size) * unitSize;
+                  context.beginPath();
+                  context.arc(x, y, r, sAngle, eAngle);
+                  context.closePath();
+                  context.fill();
+              }
 
           }
       }
@@ -143,7 +175,9 @@
       var canvas = $('#board');
       var board = new Board(canvas, 19);
       board.resetCanvasSize();
-      board.drawBoard();
+      var stoneList = [0, 0, 1, -1];
+      board.updateStoneList(stoneList);
+      board.draw();
 
 //      function showboard() {
 //          console.log("send showboard ...");
