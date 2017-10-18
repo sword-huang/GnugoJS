@@ -74,7 +74,7 @@ class Board {
         }
         var x = this.size - parseInt(position / this.size);
         var i = position % this.size;
-        var y = String.fromCharCode(65 + (i < 9 ? i : (i + 1)) );
+        var y = String.fromCharCode(65 + (i < 8 ? i : (i + 1)) );
         return y + "" + x
     }
 
@@ -267,7 +267,7 @@ class Board {
         context.fillStyle = "#000000";
         for (var i=0; i<this.size; i++) {
             context.fillText(""+(this.size-i), boardOffsetX-15, boardOffsetY + i*unitSize);
-            context.fillText(String.fromCharCode(65+(i<9?i:(i+1))), boardOffsetX + i*unitSize, boardOffsetY-10);
+            context.fillText(String.fromCharCode(65+(i<8?i:(i+1))), boardOffsetX + i*unitSize, boardOffsetY-10);
         }
         context.stroke();
 
