@@ -1,1 +1,1 @@
-# GnugoJS
+# Gnugo web client

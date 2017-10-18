@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" type="text/css" href="board.css">
+</head>
+  <body>
+  <div id="working">
+    <canvas id="board" width="600" height="600"></canvas>
+  </div>
+
+  <div>
+    <label id="websocket_message"></label>
+    <label>&nbsp;&nbsp;&nbsp;&nbsp;</label>
+    <label id="game_message"></label>
+  </div>
+
+  <div>
+    <button id="score_button" type="button" value="0" onclick="onClickScore()">Score</button>
+    <label>&nbsp;&nbsp;</label>
+    <label id="score_label"></label>
+  </div>
+
+
+  <!--<div id="preWork">-->
+    <!--<div>-->
+      <!--<input type="radio" name="color" value="1" checked="checked">Black-->
+      <!--<input type="radio" name="color" value="-1">White-->
+    <!--</div>-->
+
+    <!--<div>-->
+      <!--<input type="radio" name="board_size" value="7" checked="checked">7-->
+      <!--<input type="radio" name="board_size" value="9">9-->
+      <!--<input type="radio" name="board_size" value="13">13-->
+      <!--<input type="radio" name="board_size" value="19">19-->
+    <!--</div>-->
+
+    <!--<div>-->
+      <!--<select id="gnugo_level">-->
+        <!--<option value ="10">10</option>-->
+        <!--<option value ="9">9</option>-->
+      <!--</select>-->
+    <!--</div>-->
+
+<!--&lt;!&ndash;    <div>-->
+      <!--<input type="text" class="spinner"/>-->
+    <!--</div>-->
+<!--&ndash;&gt;-->
+    <!--<button id="start_button" type="button" value="0" onclick="onClickStart()">Start Game</button>-->
+  <!--</div>-->
+
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <script src="https://www.helloweba.com/demo/spinner/spinner/jquery.spinner.js"></script>
+  <script src="gnugo_client.js"></script>
+  <script>
+
+      function onClickStart() {
+//          //get color
+//          var colorRadio = $('input[name=color]:checked');
+//          if(colorRadio.length > 0) {
+//              console.log(colorRadio.attr("value"));
+//          }
+//
+//          //get board size
+//          var boardSizeRadio = $('input[name=board_size]:checked');
+//          if(boardSizeRadio.length > 0) {
+//              console.log(boardSizeRadio.attr("value"));
+//          }
+//
+//          //get gnugo level
+//          var levelSelect = $("#gnugo_level").val();
+//          console.log(levelSelect);
+
+          //get komi
+//          var komi = $(".spinner").spinner();
+//          console.log(komi);
+
+      }
+
+      function onClickScore() {
+          client.estimateScore();
+      }
+      
+      function updateSocketStateLabel() {
+          var stateText = client.getStateText();
+          console.log(stateText);
+          $("#websocket_message").text(stateText);
+      }
+
+      function updateMessageLabel(message) {
+          $("#game_message").text(message);
+      }
+
+      function updateScoreLabel(scoreText) {
+          $("#score_label").text(scoreText);
+      }
+
+      function init() {
+          board.resetCanvasSize();
+          board.updateStoneList([]);
+          board.draw();
+
+          canvas.click(function (e) {
+              var style = window.getComputedStyle($('#board').get(0), null);
+              var borderLeft = parseFloat(style["border-left-width"]);
+              var borderTop = parseFloat(style["border-top-width"]);
+              var paddingLeft = parseFloat(style["padding-left"]);
+              var paddingTop = parseFloat(style["padding-top"]);
+              var rect = $('#board').get(0).getBoundingClientRect();
+              var x = e.clientX;
+              var y = e.clientY;
+              x -= rect.left - borderLeft - paddingLeft;
+              y -= rect.top - borderTop - paddingTop;
+              var position = board.computeMovePosition(x, y);
+              var coord = board.position2Coordinate(position);
+              if (coord != null) {
+                  client.sendMove(coord);
+              } else {
+                  console.log("coord == null  " + coord);
+              }
+          });
+      }
+
+      var canvas = $('#board');
+      var board = new Board(canvas, 19);
+      init();
+
+      var needAIGenmove = false;
+      var client = new GtpClient("47.90.122.6", "8001");
+      setInterval(updateSocketStateLabel, 3000);
+      client.connect(function (response) {
+          console.log("response--->" + response + "," + response.length);
+          if (response[0] === '?') {
+              console.log("response--->" + response);
+              updateMessageLabel(response);
+
+          } else if (response[0] === '=') {
+              if (/^\s*\=\s*$/.test(response)) {
+                  console.log("response--->Human move success");
+                  updateMessageLabel("Human move success");
+                  needAIGenmove = true;
+                  client.sendMessage("showboard");
+
+              } else if (/^\s*\=\s*[A-Z][0-9]{1,2}\s*$/.test(response)) {
+                  console.log("response--->AI move success");
+                  updateMessageLabel("AI move success");
+                  needAIGenmove = false;
+                  client.sendMessage("showboard");
+
+              } else if (/^\s*\=\s*[WB]\+.+?\(.+\)\s*$/.test(response)) {//= B+4.1 (upper bound: -4.1, lower: -4.1)
+                  updateScoreLabel(response);
+
+              } else {
+                  //update board
+                  board.updateStoneList(board.genStoneList(response));
+                  board.draw();
+                  if (needAIGenmove) {
+                      updateMessageLabel("AI thinking...");
+                      client.genmove(-1);
+                  }
+              }
+          }
+
+      });
+
+  </script>
+
+
+  </body>
+
+  </html>
