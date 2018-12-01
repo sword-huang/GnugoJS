@@ -4,10 +4,12 @@
 http://ming-bucket-0516.oss-cn-shanghai.aliyuncs.com/gnugo/js/gnugo_client.html
 
 # Docker websocket server
-```
-docker pull liumingmad/gnugo_ws
+[Gnugo-ws](https://github.com/liumingmad/Gnugo-ws)
 
-docker run --name gnugo -p 8001:8001 -d liumingmad/gnugo_ws
+```
+docker pull liumingmad/gnugo-ws
+
+docker run --name gnugo -p 8001:8001 -d liumingmad/gnugo-ws
 
 docker ps
 ```
